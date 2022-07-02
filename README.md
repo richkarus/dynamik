@@ -1,5 +1,7 @@
 # Dynamik
 
+[![Dynamik](https://github.com/richkarus/dynamik/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/richkarus/dynamik/actions/workflows/build.yml)
+
 Dynamik is a dynamic DNS client written in Go for updating a single record in Cloudflare if the public IP does not match the A record provided.
 
 Best used within a cronjob on a NAS. :) 
