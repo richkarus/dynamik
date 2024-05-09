@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/caarlos0/env/v11"
 	"github.com/charmbracelet/log"
 	"github.com/cloudflare/cloudflare-go"
@@ -13,7 +14,6 @@ import (
 
 type Authorization struct {
 	Token string `env:"CLOUDFLARE_API_TOKEN,required"`
-	Email string `env:"CLOUDFLARE_EMAIL,required"`
 }
 
 type Dynamik struct {
@@ -34,7 +34,7 @@ func NewDynamikClient() (*Dynamik, error) {
 	if d.IsEmpty() {
 		return nil, errors.New("missing required environment variables")
 	}
-	cf, err := cloudflare.New(d.Authorization.Token, d.Authorization.Email)
+	cf, err := cloudflare.NewWithAPIToken(d.Authorization.Token)
 
 	d.Client = cf
 	d.ZoneId = d.GetZoneID()
@@ -47,7 +47,7 @@ func NewDynamikClient() (*Dynamik, error) {
 }
 
 func (d *Dynamik) IsEmpty() bool {
-	res := []bool{d.ZoneId == "", d.ZoneName == "", d.RecordName == "", d.Authorization.Token == "", d.Authorization.Email == ""}
+	res := []bool{d.ZoneId == "", d.ZoneName == "", d.RecordName == "", d.Authorization.Token == ""}
 	for i := range res {
 		if !res[i] {
 			return false
@@ -74,8 +74,9 @@ func (d *Dynamik) GetZoneDnsRecords(ctx context.Context) []cloudflare.DNSRecord 
 
 func (d *Dynamik) ParseForDynamicRecord() (string, string) {
 	ctx := context.Background()
+	fqdn := fmt.Sprintf("%s.%s", d.RecordName, d.ZoneName)
 	for _, val := range d.GetZoneDnsRecords(ctx) {
-		if val.Name == d.RecordName {
+		if val.Name == fqdn {
 			return val.ID, val.Content
 		}
 	}
