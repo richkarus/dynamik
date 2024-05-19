@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/charmbracelet/log"
+	"github.com/richkarus/dynamik/internal"
 	"os"
 )
 
 func main() {
-	client, err := NewDynamikClient()
+	client, err := dynamik.NewClient()
 	if err != nil {
-		log.Fatal("unable to create Dynamik Client", "fatal", err)
+		log.Fatal("unable to create a new Dynamik client", "fatal", err)
 		os.Exit(1)
 	}
 

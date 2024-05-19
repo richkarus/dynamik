@@ -8,6 +8,7 @@ require (
 	github.com/caarlos0/env/v11 v11.0.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/cloudflare/cloudflare-go v0.43.0
+	go.uber.org/mock v0.4.0
 )
 
 require (

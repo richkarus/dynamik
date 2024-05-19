@@ -1,4 +1,4 @@
-package main
+package dynamik
 
 import (
 	"context"
@@ -18,13 +18,21 @@ type Authorization struct {
 
 type Dynamik struct {
 	Authorization Authorization
-	Client        *cloudflare.API
+	Api           *cloudflare.API
 	ZoneId        string
 	ZoneName      string `env:"CLOUDFLARE_ZONE_NAME,required"`
 	RecordName    string `env:"CLOUDFLARE_RECORD_NAME,required"`
 }
 
-func NewDynamikClient() (*Dynamik, error) {
+type Client interface {
+	NewDynamikClient() (*cloudflare.API, error)
+	GetZoneID(ctx context.Context, zoneName string) (string, error)
+	GetZoneName(ctx context.Context, zoneId string) (string, error)
+	GetZoneDnsRecords(ctx context.Context, zoneId string) ([]cloudflare.DNSRecord, error)
+	UpdateDynamicDnsRecord(ctx context.Context, zoneId string, dnsRecord cloudflare.DNSRecord) error
+}
+
+func NewClient() (*Dynamik, error) {
 	var err error
 	var d Dynamik
 	d, err = env.ParseAs[Dynamik]()
@@ -36,7 +44,7 @@ func NewDynamikClient() (*Dynamik, error) {
 	}
 	cf, err := cloudflare.NewWithAPIToken(d.Authorization.Token)
 
-	d.Client = cf
+	d.Api = cf
 	d.ZoneId = d.GetZoneID()
 
 	if err != nil {
@@ -57,7 +65,7 @@ func (d *Dynamik) IsEmpty() bool {
 }
 
 func (d *Dynamik) GetZoneID() string {
-	zoneID, err := d.Client.ZoneIDByName(d.ZoneName)
+	zoneID, err := d.Api.ZoneIDByName(d.ZoneName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +73,7 @@ func (d *Dynamik) GetZoneID() string {
 }
 
 func (d *Dynamik) GetZoneDnsRecords(ctx context.Context) []cloudflare.DNSRecord {
-	records, err := d.Client.DNSRecords(ctx, d.ZoneId, cloudflare.DNSRecord{})
+	records, err := d.Api.DNSRecords(ctx, d.ZoneId, cloudflare.DNSRecord{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -109,6 +117,6 @@ func (d *Dynamik) CheckIpMatches() bool {
 
 func (d *Dynamik) UpdateDynamicDnsRecord(recordId string, value cloudflare.DNSRecord) error {
 	ctx := context.Background()
-	res := d.Client.UpdateDNSRecord(ctx, d.ZoneId, recordId, value)
+	res := d.Api.UpdateDNSRecord(ctx, d.ZoneId, recordId, value)
 	return res
 }
